@@ -198,5 +198,5 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  <sub>Built with ❤️ using C++17 and Qt5</sub>
+  <sub>Built with ❤️ by Federico Martinez</sub>
 </p>
