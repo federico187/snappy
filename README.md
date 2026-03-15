@@ -191,12 +191,6 @@ snappy/
 
 ---
 
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
----
-
 <p align="center">
   <sub>Built with ❤️ by Federico Martinez</sub>
 </p>
