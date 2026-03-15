@@ -1,0 +1,33 @@
+# Build outputs
+build/
+build-win/
+*.o
+*.obj
+*.exe
+*.dll
+moc_*
+qrc_*
+ui_*
+moc_predefs.h
+Makefile
+.qmake.stash
+
+# IDE files
+.vscode/
+.idea/
+*.pro.user
+*.pro.user.*
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Qt Creator
+*.autosave
+
+# Config (local user settings)
+.snappy/
