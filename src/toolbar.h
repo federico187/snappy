@@ -17,6 +17,7 @@ class Toolbar : public QWidget
 public:
     explicit Toolbar(QWidget *parent = nullptr);
     void setActiveTool(CanvasView::Tool tool);
+    void setSliderValue(int v);
     QWidget *widthBar() { return m_widthBar; } // for editor to add to layout
 signals:
     void toolChanged(CanvasView::Tool tool);

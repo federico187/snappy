@@ -8,11 +8,12 @@ build-win/
 moc_*
 qrc_*
 ui_*
-moc_predefs.h
+*_autogen/
 Makefile
 .qmake.stash
+moc_predefs.h
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.pro.user
@@ -21,13 +22,10 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Qt Creator
-*.autosave
-
-# Config (local user settings)
+# Config (user-specific)
 .snappy/

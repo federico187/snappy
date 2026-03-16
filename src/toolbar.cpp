@@ -220,3 +220,13 @@ void Toolbar::setActiveTool(CanvasView::Tool t)
     if (m_map.contains(t)) m_map[t]->setChecked(true);
     updateWidthBarVisibility(t);
 }
+
+void Toolbar::setSliderValue(int v)
+{
+    if (m_widthSlider) {
+        m_widthSlider->blockSignals(true);
+        m_widthSlider->setValue(v);
+        m_widthSlider->blockSignals(false);
+        if (m_widthLabel) m_widthLabel->setText(QString::number(v));
+    }
+}

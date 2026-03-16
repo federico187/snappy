@@ -83,6 +83,8 @@ private:
     QStack<QList<QGraphicsItem*>> m_deleteHistory; // batches of deleted items for undo
     int m_numCounter;
     QPoint m_mousePos;
+    QPoint m_selectPressPos; // for single-click vs drag detection
+    bool m_hadSelectionOnPress;
     QGraphicsItem *m_activeItem; // last created/editing item for real-time updates
 
     // Middle-button panning

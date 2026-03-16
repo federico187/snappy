@@ -10,6 +10,7 @@
 #include <QFormLayout>
 #include <QScrollArea>
 #include <QCoreApplication>
+#include <QColorDialog>
 
 struct SC { QString key, label, def; };
 static const QVector<SC> SCDEFS = {
@@ -25,6 +26,8 @@ static const char *DST =
     "QLineEdit,QKeySequenceEdit{background:#1E1E1E;border:1px solid #555;border-radius:4px;padding:4px 8px;color:#DDD;}"
     "QLineEdit:focus,QKeySequenceEdit:focus{border-color:#6C5CE7;}"
     "QCheckBox{color:#DDD;spacing:8px;}"
+    "QSpinBox{background:#1E1E1E;border:1px solid #555;border-radius:4px;padding:4px 8px;color:#DDD;min-width:60px;}"
+    "QSpinBox:focus{border-color:#6C5CE7;}"
     "QPushButton{background:#6C5CE7;color:white;border:none;border-radius:4px;padding:6px 16px;font-weight:bold;}"
     "QPushButton:hover{background:#5A4BD1;}"
     "QPushButton#sec{background:#444;}QPushButton#sec:hover{background:#555;}"
@@ -35,7 +38,8 @@ static const char *DST =
 
 PreferencesDialog::PreferencesDialog(QSettings *s, QWidget *p) : QDialog(p), m_s(s)
 {
-    setWindowTitle("Preferences"); setFixedSize(480,420); setStyleSheet(DST);
+    setWindowTitle("Preferences"); setFixedSize(480,520); setStyleSheet(DST);
+    m_defaultColor = QColor(m_s->value("Defaults/Color", "#E74C3C").toString());
     build(); load();
 }
 
@@ -44,7 +48,7 @@ void PreferencesDialog::build()
     auto *ml = new QVBoxLayout(this);
     auto *tabs = new QTabWidget(this);
 
-    // General tab
+    // ===== General tab =====
     auto *gt = new QWidget;
     auto *gl = new QVBoxLayout(gt);
     auto *sg = new QGroupBox("Storage", gt);
@@ -65,7 +69,44 @@ void PreferencesDialog::build()
     gl->addStretch();
     tabs->addTab(gt,"General");
 
-    // Shortcuts tab
+    // ===== Defaults tab =====
+    auto *dt = new QWidget;
+    dt->setStyleSheet("background:#2D2D2D;");
+    auto *dl = new QVBoxLayout(dt);
+
+    auto *cg = new QGroupBox("Default Color");
+    auto *cgl = new QHBoxLayout(cg);
+    m_colorSwatch = new QToolButton;
+    m_colorSwatch->setFixedSize(32, 32);
+    m_colorSwatch->setCursor(Qt::PointingHandCursor);
+    updateColorSwatch();
+    connect(m_colorSwatch, &QToolButton::clicked, this, &PreferencesDialog::pickDefaultColor);
+    cgl->addWidget(m_colorSwatch);
+    cgl->addWidget(new QLabel("Click to change the default annotation color"));
+    cgl->addStretch();
+    dl->addWidget(cg);
+
+    auto *wg = new QGroupBox("Default Sizes");
+    auto *wfl = new QFormLayout(wg);
+    wfl->setLabelAlignment(Qt::AlignRight);
+
+    m_widthArrow = new QSpinBox; m_widthArrow->setRange(1, 20);
+    wfl->addRow("Arrows:", m_widthArrow);
+
+    m_widthLine = new QSpinBox; m_widthLine->setRange(1, 20);
+    wfl->addRow("Lines:", m_widthLine);
+
+    m_widthShape = new QSpinBox; m_widthShape->setRange(1, 20);
+    wfl->addRow("Rectangles / Circles:", m_widthShape);
+
+    m_widthText = new QSpinBox; m_widthText->setRange(1, 20);
+    wfl->addRow("Text:", m_widthText);
+
+    dl->addWidget(wg);
+    dl->addStretch();
+    tabs->addTab(dt, "Defaults");
+
+    // ===== Shortcuts tab =====
     auto *st = new QWidget;
     st->setStyleSheet("background:#2D2D2D;");
     auto *sol = new QVBoxLayout(st);
@@ -95,6 +136,23 @@ void PreferencesDialog::build()
     ml->addLayout(bl);
 }
 
+void PreferencesDialog::updateColorSwatch()
+{
+    m_colorSwatch->setStyleSheet(QString(
+        "QToolButton{background:%1;border:2px solid #555;border-radius:6px;}"
+        "QToolButton:hover{border-color:#999;}"
+    ).arg(m_defaultColor.name()));
+}
+
+void PreferencesDialog::pickDefaultColor()
+{
+    QColor c = QColorDialog::getColor(m_defaultColor, this, "Default Color");
+    if (c.isValid()) {
+        m_defaultColor = c;
+        updateColorSwatch();
+    }
+}
+
 void PreferencesDialog::load()
 {
     m_pathEdit->setText(m_s->value("General/SavePath",
@@ -104,6 +162,14 @@ void PreferencesDialog::load()
     m_startWithWindows->setChecked(m_s->value("General/StartWithWindows",false).toBool());
     for (const auto &d : SCDEFS)
         m_scEdits[d.key]->setKeySequence(QKeySequence(m_s->value("Shortcuts/"+d.key,d.def).toString()));
+
+    // Defaults
+    m_defaultColor = QColor(m_s->value("Defaults/Color", "#E74C3C").toString());
+    updateColorSwatch();
+    m_widthArrow->setValue(m_s->value("Defaults/WidthArrow", 3).toInt());
+    m_widthLine->setValue(m_s->value("Defaults/WidthLine", 3).toInt());
+    m_widthShape->setValue(m_s->value("Defaults/WidthShape", 3).toInt());
+    m_widthText->setValue(m_s->value("Defaults/WidthText", 3).toInt());
 }
 
 void PreferencesDialog::browseFolder()
@@ -131,6 +197,14 @@ void PreferencesDialog::apply()
 
     for (const auto &d : SCDEFS)
         m_s->setValue("Shortcuts/"+d.key, m_scEdits[d.key]->keySequence().toString());
+
+    // Defaults
+    m_s->setValue("Defaults/Color", m_defaultColor.name());
+    m_s->setValue("Defaults/WidthArrow", m_widthArrow->value());
+    m_s->setValue("Defaults/WidthLine", m_widthLine->value());
+    m_s->setValue("Defaults/WidthShape", m_widthShape->value());
+    m_s->setValue("Defaults/WidthText", m_widthText->value());
+
     m_s->sync(); close();
 }
 

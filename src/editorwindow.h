@@ -32,6 +32,8 @@ private:
     void fitWindow();
     void setSwatchColor(const QColor &c);
     void activateTool(CanvasView::Tool t);
+    void applyDefaults();
+    void onToolChanged(CanvasView::Tool t);
 
     QPixmap m_shot;
     QSettings *m_set;
@@ -42,6 +44,12 @@ private:
     QLabel *m_hintLabel;
     QLabel *m_sizeLabel;
     QLabel *m_zoomLabel;
+
+    // Per-tool default widths
+    int m_defWidthArrow;
+    int m_defWidthLine;
+    int m_defWidthShape;
+    int m_defWidthText;
 };
 
 #endif

@@ -23,6 +23,7 @@ CanvasView::CanvasView(const QPixmap &screenshot, QWidget *parent)
     , m_numCounter(1)
     , m_panning(false)
     , m_measuring(false)
+    , m_hadSelectionOnPress(false)
     , m_activeItem(nullptr)
 {
     setScene(m_scene);
@@ -251,19 +252,8 @@ void CanvasView::mousePressEvent(QMouseEvent *e)
 
     switch (m_tool) {
     case ToolSelect: {
-        QGraphicsItem *clicked = m_scene->itemAt(sp, transform());
-        bool clickedBackground = (!clicked || clicked == m_pxItem);
-        bool hadSelection = !m_scene->selectedItems().isEmpty();
-
-        // Pick color ONLY when clicking empty background with nothing selected
-        if (clickedBackground && !hadSelection) {
-            QColor c = colorAt(e->pos());
-            if (c.isValid()) {
-                m_color = c;
-                emit colorPicked(c);
-            }
-        }
-
+        m_selectPressPos = e->pos();
+        m_hadSelectionOnPress = !m_scene->selectedItems().isEmpty();
         QGraphicsView::mousePressEvent(e);
         return;
     }
@@ -421,7 +411,24 @@ void CanvasView::mouseReleaseEvent(QMouseEvent *e)
         return;
     }
 
-    if (m_tool == ToolSelect) { QGraphicsView::mouseReleaseEvent(e); return; }
+    if (m_tool == ToolSelect) {
+        // Pick color only on single click (not drag) on empty background with nothing selected
+        QPoint delta = e->pos() - m_selectPressPos;
+        bool wasSingleClick = (delta.manhattanLength() < 5);
+        if (wasSingleClick && !m_hadSelectionOnPress) {
+            QGraphicsItem *clicked = m_scene->itemAt(sp, transform());
+            bool clickedBackground = (!clicked || clicked == m_pxItem);
+            if (clickedBackground) {
+                QColor c = colorAt(e->pos());
+                if (c.isValid()) {
+                    m_color = c;
+                    emit colorPicked(c);
+                }
+            }
+        }
+        QGraphicsView::mouseReleaseEvent(e);
+        return;
+    }
     if (m_cropping) {
         m_cropping = false;
         viewport()->update();

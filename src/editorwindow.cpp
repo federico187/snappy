@@ -38,9 +38,57 @@ EditorWindow::EditorWindow(const QPixmap &screenshot, QSettings *settings, QWidg
     setStyleSheet("QMainWindow{background:#1E1E22;}");
     buildUI();
     setupShortcuts();
+    applyDefaults();
     fitWindow();
     // zoomToFit after layout is settled
     QTimer::singleShot(0, this, [this](){ if(m_canvas) m_canvas->zoomToFit(); });
+}
+
+void EditorWindow::applyDefaults()
+{
+    // Read per-tool defaults from settings
+    m_defWidthArrow = m_set->value("Defaults/WidthArrow", 3).toInt();
+    m_defWidthLine  = m_set->value("Defaults/WidthLine", 3).toInt();
+    m_defWidthShape = m_set->value("Defaults/WidthShape", 3).toInt();
+    m_defWidthText  = m_set->value("Defaults/WidthText", 3).toInt();
+
+    // Apply default color
+    QColor defColor(m_set->value("Defaults/Color", "#E74C3C").toString());
+    if (defColor.isValid() && m_canvas) {
+        m_canvas->setDrawingColor(defColor);
+        setSwatchColor(defColor);
+    }
+
+    // Apply initial width (arrow default as starting point)
+    if (m_canvas) m_canvas->setStrokeWidth(m_defWidthArrow);
+    if (m_bar) m_bar->setSliderValue(m_defWidthArrow);
+}
+
+void EditorWindow::onToolChanged(CanvasView::Tool t)
+{
+    // Set per-tool default width on the slider
+    int w = m_defWidthArrow; // fallback
+    switch (t) {
+    case CanvasView::ToolArrow:
+        w = m_defWidthArrow; break;
+    case CanvasView::ToolLine:
+    case CanvasView::ToolPen:
+        w = m_defWidthLine; break;
+    case CanvasView::ToolRect:
+    case CanvasView::ToolEllipse:
+        w = m_defWidthShape; break;
+    case CanvasView::ToolText:
+        w = m_defWidthText; break;
+    case CanvasView::ToolNumbered:
+        w = m_defWidthShape; break;
+    default: break;
+    }
+
+    if (m_bar) m_bar->setSliderValue(w);
+    if (m_canvas) {
+        m_canvas->setStrokeWidth(w);
+        m_canvas->setCurrentTool(t);
+    }
 }
 
 void EditorWindow::fitWindow()
@@ -171,7 +219,7 @@ void EditorWindow::buildUI()
     vlay->addWidget(m_canvas, 1);
 
     // ===== CONNECTIONS =====
-    connect(m_bar, &Toolbar::toolChanged, m_canvas, &CanvasView::setCurrentTool);
+    connect(m_bar, &Toolbar::toolChanged, this, &EditorWindow::onToolChanged);
     connect(m_bar, &Toolbar::deleteRequested, m_canvas, &CanvasView::deleteSelectedItems);
     connect(m_bar, &Toolbar::copyRequested, this, &EditorWindow::copy);
     connect(m_bar, &Toolbar::saveRequested, this, &EditorWindow::save);
@@ -283,8 +331,7 @@ void EditorWindow::copy()
 {
     if (!m_canvas) return;
     QApplication::clipboard()->setPixmap(m_canvas->renderToPixmap());
-    if (m_hintLabel) { m_hintLabel->setText("Copied!");
-        QTimer::singleShot(2000, this, [this](){ if(m_hintLabel) m_hintLabel->setText("Click to copy"); }); }
+    hide();
 }
 
 void EditorWindow::activateTool(CanvasView::Tool t)
